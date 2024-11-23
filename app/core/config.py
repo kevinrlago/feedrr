@@ -59,3 +59,7 @@ def setup_logging():
     return logging.getLogger(__name__)
 
 logger = setup_logging()
+
+# app/core/config.py
+APP_NAME = "Feedrr"
+DATABASE_NAME = "feedrr"
