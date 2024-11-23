@@ -1,0 +1,33 @@
+{
+    "telegram": {
+        "bot_token": "YOUR_TELEGRAM_BOT_TOKEN",
+        "chat_id": "YOUR_CHAT_ID"
+    },
+    "database": {
+        "user": "rss_user",
+        "password": "password",
+        "name": "rss_haiku",
+        "url": "postgresql://rss_user:password@localhost/rss_haiku"
+    },
+    "rss_sync_interval": 3600,
+    "logging": {
+        "level": "INFO",
+        "file": "app.log"
+    },
+    "mail": {
+        "username": "your-email@example.com",
+        "password": "your-email-password",
+        "from": "your-email@example.com",
+        "server": "smtp.example.com",
+        "port": 587,
+        "starttls": true,
+        "ssl_tls": true
+    },
+    "secret_key": "your_secret_key",
+    "discord": {
+        "bot_token": "YOUR_DISCORD_BOT_TOKEN"
+    },
+    "whatsapp": {
+        "api_key": "YOUR_WHATSAPP_API_KEY"
+    }
+}

@@ -1,0 +1,28 @@
+{
+    "categories": [
+        {
+            "id": 1,
+            "name": "Tecnología",
+            "telegram_topic_id": 1
+        },
+        {
+            "id": 2, 
+            "name": "Noticias",
+            "telegram_topic_id": 2
+        }
+    ],
+    "feeds": [
+        {
+            "id": 1,
+            "url": "https://www.xataka.com/feed",
+            "name": "Xataka",
+            "category_id": 1
+        },
+        {
+            "id": 2, 
+            "url": "https://elpais.com/rss/",
+            "name": "El País",
+            "category_id": 2
+        }
+    ]
+}
