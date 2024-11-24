@@ -1,0 +1,11 @@
+// cypress/fixtures/notifications.json
+{
+  "notifications": [
+    {
+      "id": 1,
+      "type": "feed_update",
+      "message": "New feed entry",
+      "read": false
+    }
+  ]
+}

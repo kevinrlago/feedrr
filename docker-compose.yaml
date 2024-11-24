@@ -51,10 +51,18 @@ services:
       - feedrr-network
 
   redis:
-    image: redis:6
+    image: redis:alpine
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+    networks:
+      - feedrr-network
+    command: redis-server --appendonly yes
 
 volumes:
   feedrr_postgres_data:
+  redis_data:
 
 networks:
   feedrr-network:

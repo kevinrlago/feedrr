@@ -1,42 +1,57 @@
 # app/db/init_db.py
+import psycopg2
+from psycopg2.extensions import ISOLATION_LEVEL_AUTOCOMMIT
+from urllib.parse import urlparse
 from sqlalchemy.orm import Session
-from sqlalchemy.exc import IntegrityError
-
 from app.core.config import CONFIG
-from app.core.security import get_password_hash
-from app.models.user import User
-from app.core.constants import UserRole
-from app.db.base import Base
-from app.db.session import engine
+
+def create_database_if_not_exists():
+    """Create database if it doesn't exist"""
+    db_url = CONFIG["database"]["url"]
+    parsed = urlparse(db_url)
+    database_name = parsed.path[1:]  # Remove leading '/'
+    
+    # Connect to postgres database to create new db
+    postgres_url = f"postgresql://{parsed.username}:{parsed.password}@{parsed.hostname}:5432/postgres"
+    
+    conn = None
+    cursor = None
+    try:
+        # Connect to PostgreSQL server
+        conn = psycopg2.connect(postgres_url)
+        conn.set_isolation_level(ISOLATION_LEVEL_AUTOCOMMIT)
+        cursor = conn.cursor()
+        
+        # Check if database exists
+        cursor.execute(f"SELECT 1 FROM pg_database WHERE datname = '{database_name}'")
+        exists = cursor.fetchone()
+        
+        if not exists:
+            cursor.execute(f'CREATE DATABASE "{database_name}"')
+            print(f"Created database {database_name}")
+        else:
+            print(f"Database {database_name} already exists")
+            
+    except Exception as e:
+        print(f"Error creating database: {e}")
+        raise
+    finally:
+        if cursor:
+            cursor.close()
+        if conn:
+            conn.close()
 
 def init_db(db: Session) -> None:
     """Initialize the database."""
     try:
-        # Drop all tables first to ensure clean slate
-        Base.metadata.drop_all(bind=engine)
+        # Create database if it doesn't exist
+        create_database_if_not_exists()
         
         # Create all tables
+        from app.db.base import Base
+        from app.db.session import engine
         Base.metadata.create_all(bind=engine)
-        
         print("Database tables created successfully")
-        
-        # Create admin user
-        if "admin_username" in CONFIG:
-            admin = User(
-                username=CONFIG.get("admin_username", "admin"),
-                email=CONFIG.get("admin_email", "admin@example.com"),
-                hashed_password=get_password_hash(CONFIG.get("admin_password", "admin")),
-                role=UserRole.ADMIN,
-                is_active=True
-            )
-            db.add(admin)
-            try:
-                db.commit()
-                print("Admin user created successfully")
-            except IntegrityError:
-                db.rollback()
-                print("Admin user already exists")
-
     except Exception as e:
         print(f"Error initializing database: {e}")
         raise

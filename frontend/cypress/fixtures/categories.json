@@ -1,0 +1,15 @@
+
+{
+  "categories": [
+    {
+      "id": 1,
+      "name": "Technology",
+      "feeds_count": 5
+    },
+    {
+      "id": 2,
+      "name": "News",
+      "feeds_count": 3
+    }
+  ]
+}

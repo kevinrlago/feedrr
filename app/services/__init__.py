@@ -7,8 +7,11 @@ from sqlalchemy.orm import Session
 
 from app.services.feed_service import FeedService
 from app.services.notification_service import NotificationService
-from app.services.message_dispatcher import MessageDispatcher
+from app.services.translation_service import TranslationService
+from app.services.filter_service import FilterService
 from app.services.email_service import EmailService
+from app.services.cache_service import RedisCache
+from app.services.message_dispatcher import MessageDispatcher
 
 class ServiceProvider:
     def __init__(self, db: Session):
@@ -47,8 +50,11 @@ __all__ = [
     "ServiceProvider",
     "FeedService",
     "NotificationService",
-    "MessageDispatcher",
+    "TranslationService",
+    "FilterService",
     "EmailService",
+    "RedisCache",
+    "MessageDispatcher",
     'RSSParser', 
     'TelegramSender', 
     'FeedManager'

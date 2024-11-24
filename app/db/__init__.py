@@ -20,7 +20,8 @@ def init_db(db: Session) -> None:
         db.commit()
 
 # app/db/__init__.py
-from app.db.base_class import Base
+from app.db.base import Base
 from app.db.session import SessionLocal, get_db
+from app.db.init_db import init_db
 
 __all__ = ["Base", "SessionLocal", "get_db", "init_db"]

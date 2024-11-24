@@ -8,7 +8,7 @@ from app.models.user import User
 from app.schemas.user import UserCreate, UserRead, UserUpdate
 from app.core.security import get_password_hash
 from app.api.deps import get_current_user
-from app.core.constants import UserRole
+from app.core.constants import UserRole, Language  # Add Language import
 
 router = APIRouter()
 
@@ -82,6 +82,16 @@ async def update_user_me(
     db.commit()
     db.refresh(current_user)
     return current_user
+
+@router.patch("/me/language")
+async def update_language_preference(
+    language: Language,
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db)
+):
+    current_user.preferred_language = language
+    db.commit()
+    return {"message": "Language preference updated"}
 
 @router.delete("/{user_id}")
 async def delete_user(

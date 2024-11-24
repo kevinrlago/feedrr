@@ -23,3 +23,31 @@ class PublicationStatus(Enum):
     PUBLISHED = "published"
     FAILED = "failed"
     SKIPPED = "skipped"
+
+class Language(Enum):
+    ENGLISH = "en"      # English
+    SPANISH = "es"      # Spanish
+    CHINESE = "zh"      # Chinese (Mandarin)
+    HINDI = "hi"        # Hindi
+    ARABIC = "ar"       # Arabic
+    BENGALI = "bn"      # Bengali
+    PORTUGUESE = "pt"   # Portuguese
+    RUSSIAN = "ru"      # Russian
+    JAPANESE = "ja"     # Japanese
+    GERMAN = "de"       # German
+
+    @classmethod
+    def get_language_name(cls, code):
+        names = {
+            "en": "English",
+            "es": "Español",
+            "zh": "中文",
+            "hi": "हिन्दी",
+            "ar": "العربية",
+            "bn": "বাংলা",
+            "pt": "Português",
+            "ru": "Русский",
+            "ja": "日本語",
+            "de": "Deutsch"
+        }
+        return names.get(code, code)

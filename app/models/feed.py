@@ -3,6 +3,7 @@ from sqlalchemy import Column, Integer, String, DateTime, ForeignKey
 from sqlalchemy.orm import relationship
 from datetime import datetime
 from app.db.base_class import Base
+from app.models.filter import feed_whitelist, feed_blacklist
 
 class Feed(Base):
     __tablename__ = "feeds"
@@ -21,6 +22,8 @@ class Feed(Base):
     category = relationship("Category", back_populates="feeds")
     creator = relationship("User", back_populates="feeds")
     entries = relationship("FeedEntry", back_populates="feed", cascade="all, delete-orphan")
+    whitelist_words = relationship("FilterWord", secondary=feed_whitelist, back_populates="feeds_whitelist")
+    blacklist_words = relationship("FilterWord", secondary=feed_blacklist, back_populates="feeds_blacklist")
 
     def __repr__(self):
         return f"<Feed {self.name}>"

@@ -3,6 +3,8 @@ from typing import Any, Dict, List
 from datetime import datetime
 import re
 import urllib.parse
+from app.utils.validators import validate_password
+from app.utils.pagination import paginate
 
 def validate_url(url: str) -> bool:
     """Validate if string is a valid URL."""
@@ -39,5 +41,7 @@ __all__ = [
     "sanitize_string",
     "format_datetime",
     "chunk_list",
-    "merge_dicts"
+    "merge_dicts",
+    "validate_password",
+    "paginate"
 ]

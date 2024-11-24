@@ -1,23 +1,28 @@
 # tests/test_services/test_email_service.py
 import pytest
+from unittest.mock import patch
 from app.services.email_service import EmailService
 
-def test_send_email():
+@pytest.mark.asyncio
+async def test_send_email():
     service = EmailService()
-    result = service.send_email(
-        email="test@example.com",
-        subject="Test Subject",
-        body="Test Body"
-    )
-    assert result is True
+    with patch('fastapi_mail.FastMail.send_message') as mock_send:
+        await service.send_email(
+            email="test@example.com",
+            subject="Test",
+            body="Test body"
+        )
+        mock_send.assert_called_once()
 
-def test_send_reset_password_email():
+@pytest.mark.asyncio
+async def test_send_magic_link():
     service = EmailService()
-    result = service.send_reset_password_email(
-        email="test@example.com",
-        token="reset-token"
-    )
-    assert result is True
+    with patch('fastapi_mail.FastMail.send_message') as mock_send:
+        await service.send_magic_link(
+            email="test@example.com",
+            token="test-token"
+        )
+        mock_send.assert_called_once()
 
 @pytest.mark.parametrize("email", [
     "invalid-email",

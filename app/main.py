@@ -44,8 +44,14 @@ ACCESS_TOKEN_EXPIRE_MINUTES = 30  # Define the expiration time for access tokens
 from app.api import api_router
 import uvicorn
 
+from app.middleware import error_handler_middleware, auth_middleware, rate_limit_middleware
+
 app = FastAPI(title="Feedrr API")
 app.include_router(api_router)
+
+app.middleware("http")(error_handler_middleware)
+app.middleware("http")(auth_middleware)
+app.middleware("http")(rate_limit_middleware)
 
 @app.middleware("http")
 async def auth_middleware(request: Request, call_next):
@@ -184,6 +190,14 @@ async def login(form_data: OAuth2PasswordRequestForm = Depends(), db: Session = 
 @app.get("/users/me")
 async def read_users_me(current_user: Optional[User] = Depends(get_current_user)):
     return current_user
+
+@app.on_event("startup")
+async def startup_event():
+    db = SessionLocal()
+    try:
+        init_db(db)
+    finally:
+        db.close()
 
 @app.on_event("startup")
 async def startup_event():

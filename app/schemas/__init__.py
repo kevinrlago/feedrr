@@ -1,12 +1,14 @@
 # app/schemas/__init__.py
-from app.schemas.user import UserCreate, UserUpdate, UserInDB, User
-from app.schemas.feed import FeedCreate, FeedUpdate, Feed, FeedEntry, FeedEntryCreate
-from app.schemas.category import CategoryCreate, CategoryUpdate, Category
-from app.schemas.feed_request import FeedRequestCreate, FeedRequest
+from app.schemas.user import UserCreate, UserRead, UserUpdate
+from app.schemas.feed import FeedCreate, FeedRead, FeedUpdate
+from app.schemas.category import CategoryCreate, CategoryRead
+from app.schemas.filter import FilterWordCreate, FilterWord
+from app.schemas.publication import PublicationCreate, Publication
 
 __all__ = [
-    "UserCreate", "UserUpdate", "UserInDB", "User",
-    "FeedCreate", "FeedUpdate", "Feed", "FeedEntry", "FeedEntryCreate",
-    "CategoryCreate", "CategoryUpdate", "Category",
-    "FeedRequestCreate", "FeedRequest"
+    "UserCreate", "UserRead", "UserUpdate",
+    "FeedCreate", "FeedRead", "FeedUpdate",
+    "CategoryCreate", "CategoryRead",
+    "FilterWordCreate", "FilterWord",
+    "PublicationCreate", "Publication"
 ]

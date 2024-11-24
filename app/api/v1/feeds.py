@@ -5,7 +5,7 @@ from typing import List
 
 from app.db.session import get_db
 from app.models.feed import Feed
-from app.schemas.feed import FeedCreate, Feed as FeedSchema
+from app.schemas.feed import FeedCreate, FeedRead as FeedSchema  # Updated import
 from app.api.deps import get_current_user
 from app.services.feed_service import FeedService
 

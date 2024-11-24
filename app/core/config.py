@@ -63,3 +63,19 @@ logger = setup_logging()
 # app/core/config.py
 APP_NAME = "Feedrr"
 DATABASE_NAME = "feedrr"
+
+import os
+import json
+from typing import Dict, Any
+
+def load_config() -> Dict[str, Any]:
+    env = os.getenv("APP_ENV", "development")
+    config_path = f"config/config.{env}.json"
+    
+    if not os.path.exists(config_path):
+        raise FileNotFoundError(f"Configuration file not found at {config_path}")
+        
+    with open(config_path, "r") as f:
+        return json.load(f)
+
+CONFIG = load_config()
