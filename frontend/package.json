@@ -24,7 +24,10 @@
     "@babel/preset-env": "^7.20.2",
     "@babel/preset-react": "^7.18.6",
     "cypress": "^13.6.0",
-    "start-server-and-test": "^2.0.0"
+    "start-server-and-test": "^2.0.0",
+    "eslint": "^8.57.0",
+    "eslint-config-prettier": "^9.1.0",
+    "eslint-plugin-react": "^7.34.0"
   },
   "scripts": {
     "start": "react-scripts start",
@@ -35,7 +38,8 @@
     "test:watch": "jest --watch",
     "cypress:open": "cypress open",
     "cypress:run": "cypress run",
-    "test:e2e": "start-server-and-test start http://localhost:3000 cypress:run"
+    "test:e2e": "start-server-and-test start http://localhost:3000 cypress:run",
+    "lint": "eslint . --ext .js,.jsx,.ts,.tsx"
   },
   "proxy": "http://localhost:8000",
   "browserslist": {

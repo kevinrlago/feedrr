@@ -1,0 +1,39 @@
+{
+    "app": {
+        "name": "Feedrr",
+        "environment": "development"
+    },
+    "database": {
+        "url": "postgresql://postgres:postgres@db:5432/feedrr",
+        "test_url": "postgresql://postgres:postgres@localhost:5432/feedrr_test"
+    },
+    "redis": {
+        "enabled": false,
+        "host": "redis",
+        "port": 6379,
+        "db": 0,
+        "ttl": 3600
+    },
+    "telegram": {
+        "bot_token": "YOUR_BOT_TOKEN",
+        "chat_id": "YOUR_CHAT_ID"
+    },
+    "discord": {
+        "bot_token": "YOUR_BOT_TOKEN"
+    },
+    "whatsapp": {
+        "api_key": "YOUR_API_KEY"
+    },
+    "mail": {
+        "username": "your-email@example.com",
+        "password": "your-email-password",
+        "from": "your-email@example.com",
+        "server": "smtp.example.com",
+        "port": 587,
+        "starttls": true,
+        "ssl_tls": false
+    },
+    "translation": {
+        "api_key": "YOUR_GOOGLE_TRANSLATE_API_KEY"
+    }
+}

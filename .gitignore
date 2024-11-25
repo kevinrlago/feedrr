@@ -57,6 +57,7 @@ logs/
 
 # Config files with sensitive data
 config/*.json
+!config/config.test.json
 !config/config.example.json
 
 # Cache
