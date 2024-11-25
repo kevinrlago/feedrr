@@ -43,6 +43,7 @@ pytube>=15.0.0
 pytest>=7.0.0
 pytest-asyncio>=0.18.0
 httpx>=0.24.0
+black>=22.1b1
 
 redis>=5.0.0
 
