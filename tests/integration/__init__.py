@@ -64,9 +64,3 @@ def test_env(integration_db):
     env = create_test_environment(integration_db)
     yield env
     integration_db.rollback()
-
-# Mark all tests in this directory as integration tests
-pytest.register_mark(
-    "integration",
-    "mark test as an integration test"
-)

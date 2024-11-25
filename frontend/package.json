@@ -36,6 +36,7 @@
     "eslint": "^8.57.0",
     "eslint-config-prettier": "^9.1.0",
     "eslint-plugin-react": "^7.34.0",
+    "eslint-plugin-cypress": "^2.11.3",
     "jest": "^29.5.0",
     "prettier": "^2.8.8",
     "start-server-and-test": "^2.0.0",
@@ -51,7 +52,8 @@
     "cypress:open": "cypress open",
     "cypress:run": "cypress run",
     "test:e2e": "start-server-and-test start http://localhost:3000 cypress:run",
-    "lint": "eslint . --ext .js,.jsx,.ts,.tsx",
+    "lint": "eslint --ext .js,.jsx,.ts,.tsx src/",
+    "lint:fix": "eslint --fix --ext .js,.jsx,.ts,.tsx src/",
     "type-check": "tsc --noEmit",
     "prebuild": "npm install"
   },
