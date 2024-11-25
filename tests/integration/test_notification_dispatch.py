@@ -1,4 +1,5 @@
 # tests/integration/test_notification_dispatch.py
+import pytest
 @pytest.mark.integration
 async def test_notification_pipeline(test_db):
     from app.services import NotificationService

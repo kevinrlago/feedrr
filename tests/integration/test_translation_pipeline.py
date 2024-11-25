@@ -1,4 +1,5 @@
 # tests/integration/test_translation_pipeline.py
+import pytest
 @pytest.mark.integration
 async def test_translation_pipeline(test_db):
     from app.services import TranslationService

@@ -1,4 +1,5 @@
 # tests/integration/test_filter_pipeline.py
+import pytest
 @pytest.mark.integration
 async def test_filter_pipeline(test_db):
     from app.services import FilterService
