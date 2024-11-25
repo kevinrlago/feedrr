@@ -1,15 +1,19 @@
 // frontend/src/components/FeedRequests.js
 import React, { useState, useEffect } from 'react';
 import {
-  Box,
-  Card,
-  CardContent,
-  Typography,
+  Table,
+  TableBody,
+  TableCell,
+  TableContainer,
+  TableHead,
+  TableRow,
+  Paper,
   Button,
-  Grid,
   Snackbar,
   Alert,
-  CircularProgress
+  CircularProgress,
+  Box,
+  Typography
 } from '@mui/material';
 import axios from 'axios';
 
@@ -32,6 +36,24 @@ const FeedRequests = () => {
       setRequests([]);
     } finally {
       setLoading(false);
+    }
+  };
+
+  const handleApprove = async (id) => {
+    try {
+      await axios.post(`/api/v1/feed-requests/${id}/approve`);
+      await fetchRequests(); // Refresh list
+    } catch (error) {
+      console.error('Error approving request:', error);
+    }
+  };
+
+  const handleReject = async (id) => {
+    try {
+      await axios.post(`/api/v1/feed-requests/${id}/reject`);
+      await fetchRequests(); // Refresh list
+    } catch (error) {
+      console.error('Error rejecting request:', error);
     }
   };
 
@@ -59,21 +81,16 @@ const FeedRequests = () => {
       <Typography variant="h4" gutterBottom>
         Feed Requests
       </Typography>
-      <Grid container spacing={3}>
-        {requests.map((request) => (
-          <Grid item xs={12} sm={6} md={4} key={request.id}>
-            <Card>
-              <CardContent>
-                <Typography variant="h6" gutterBottom>
-                  {request.name}
-                </Typography>
-                <Typography color="textSecondary" gutterBottom>
-                  URL: {request.url}
-                </Typography>
-                <Typography color="textSecondary" gutterBottom>
-                  Status: {request.status}
-                </Typography>
-                <Box sx={{ mt: 2, display: 'flex', gap: 1 }}>
+      <TableContainer component={Paper}>
+        <Table>
+          <TableHead>
+            {/* ... existing table head ... */}
+          </TableHead>
+          <TableBody>
+            {requests.map((request) => (
+              <TableRow key={request.id}>
+                <TableCell>{request.url}</TableCell>
+                <TableCell>
                   <Button
                     variant="contained"
                     color="success"
@@ -90,12 +107,12 @@ const FeedRequests = () => {
                   >
                     Reject
                   </Button>
-                </Box>
-              </CardContent>
-            </Card>
-          </Grid>
-        ))}
-      </Grid>
+                </TableCell>
+              </TableRow>
+            ))}
+          </TableBody>
+        </Table>
+      </TableContainer>
       <Snackbar
         open={snackbar.open}
         autoHideDuration={6000}

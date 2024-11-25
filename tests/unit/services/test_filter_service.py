@@ -1,7 +1,8 @@
-# tests/services/test_filter_service.py
+# tests/test_services/test_filter_service.py
 import pytest
 from app.services.filter_service import FilterService
-from app.models.feed import Feed, FilterWord
+from app.models.feed import Feed
+from app.models.filter import FilterWord  # Fixed import path
 
 def test_check_entry_against_filters(test_db):
     service = FilterService()

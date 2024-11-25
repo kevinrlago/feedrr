@@ -67,3 +67,8 @@ def create_test_publication(db, entry, platform=Platform.TELEGRAM):
     db.add(pub)
     db.commit()
     return pub
+
+from .test_feed import create_test_feed
+from .test_category import create_test_category
+
+__all__ = ['create_test_feed', 'create_test_category']

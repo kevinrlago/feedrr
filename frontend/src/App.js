@@ -1,7 +1,7 @@
 // src/App.js
 // 1. Third-party imports
 import React, { useState, useEffect } from 'react';
-import { Routes, Route, Link, useNavigate } from 'react-router-dom';
+import { BrowserRouter as Router, Routes, Route, Link, useNavigate } from 'react-router-dom';
 import { Box, Drawer, List, ListItem, ListItemIcon, ListItemText, Collapse } from '@mui/material';
 import { ThemeProvider, styled } from '@mui/material/styles';
 import axios from 'axios';
@@ -45,6 +45,12 @@ import Alerts from './components/Alerts';
 import Stats from './components/Stats';
 import Logo from './components/Logo';
 import FeedRequests from './components/FeedRequests';
+import NotificationList from './components/NotificationList';
+import MagicLinkLogin from './components/MagicLinkLogin';
+import Settings from './components/Settings';
+import UserProfile from './components/UserProfile';
+import LoginMethodsConfig from './components/Settings/LoginMethodsConfig';
+import Sidebar from './components/Sidebar';
 
 // 5. Icon aliases
 const NotificationsIcon = Notifications;
@@ -167,86 +173,31 @@ const App = () => {
   );
 
   return (
-    <Box sx={{ display: 'flex', flexDirection: 'column' }}>
-      {/* Orange Header with white icon only */}
-      <Box
-        sx={{
-          width: '100%',
-          bgcolor: orange[500],
-          height: 64,
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-          position: 'fixed',
-          top: 0,
-          zIndex: (theme) => theme.zIndex.drawer + 1
-        }}
-      >
-        <Logo color="white" variant="icon-only" />
-      </Box>
-
-      <Box sx={{ display: 'flex', mt: '64px' }}>
-        <Drawer
-          variant="permanent"
-          sx={{
-            width: drawerWidth,
-            flexShrink: 0,
-            '& .MuiDrawer-paper': {
-              width: drawerWidth,
-              boxSizing: 'border-box',
-              mt: '64px',
-              height: `calc(100% - 64px)`,
-              display: 'flex',
-              flexDirection: 'column'
-            },
-          }}
-        >
-          <List sx={{ flex: 1 }}>
-            {menuItems.map(item => renderMenuItem(item))}
-          </List>
-
-          {/* Auth Icon */}
-          {loginEnabled && (
-            <ListItem
-              button
-              onClick={isLoggedIn ? handleLogout : () => navigate('/login')}
-            >
-              <ListItemIcon>
-                {isLoggedIn ? <LogoutIcon /> : <LoginIcon />}
-              </ListItemIcon>
-              <ListItemText primary={isLoggedIn ? "Logout" : "Login"} />
-            </ListItem>
-          )}
-
-          {/* Footer Logo */}
-          <Box
-            sx={{
-              borderTop: 1,
-              borderColor: 'divider',
-              p: 2
-            }}
-          >
-            <Logo />
-          </Box>
-        </Drawer>
-
-        <Main>
-          <Routes>
-            <Route path="/" element={<DashboardComponent />} />
-            <Route path="/feeds" element={<FeedList />} />
-            <Route path="/feeds/add" element={<AddFeed />} />
-            <Route path="/feeds/requests" element={<FeedRequests />} />
-            <Route path="/categories" element={<CategoryConfig />} />
-            <Route path="/users" element={<UserList />} />
-            <Route path="/users/add" element={<AddUser />} />
-            <Route path="/telegram" element={<TelegramConfig />} />
-            <Route path="/alerts" element={<Alerts />} />
-            <Route path="/stats" element={<Stats />} />
-            <Route path="/senders/telegram" element={<TelegramConfig />} />
-            <Route path="/senders/discord" element={<DiscordConfig />} />
-            <Route path="/senders/whatsapp" element={<WhatsAppConfig />} />
-          </Routes>
-        </Main>
+    <Box sx={{ display: 'flex' }}>
+      <Sidebar />
+      <Box component="main" sx={{ flexGrow: 1, p: 3 }}>
+        <Routes>
+          <Route path="/" element={<DashboardComponent />} />
+          <Route path="/feeds" element={<FeedList />} />
+          <Route path="/feeds/add" element={<AddFeed />} />
+          <Route path="/feeds/requests" element={<FeedRequests />} />
+          <Route path="/categories" element={<CategoryConfig />} />
+          <Route path="/users" element={<UserList />} />
+          <Route path="/users/add" element={<AddUser />} />
+          <Route path="/telegram" element={<TelegramConfig />} />
+          <Route path="/alerts" element={<Alerts />} />
+          <Route path="/stats" element={<Stats />} />
+          <Route path="/senders/telegram" element={<TelegramConfig />} />
+          <Route path="/senders/discord" element={<DiscordConfig />} />
+          <Route path="/senders/whatsapp" element={<WhatsAppConfig />} />
+          <Route path="/notifications" element={<NotificationList />} />
+          <Route path="/auth/magic-link" element={<MagicLinkLogin />} />
+          <Route path="/settings" element={<Settings />}>
+            <Route path="profile" element={<UserProfile />} />
+            <Route path="login-methods" element={<LoginMethodsConfig />} />
+          </Route>
+          <Route path="/settings/login-methods" element={<LoginMethodsConfig />} />
+        </Routes>
       </Box>
     </Box>
   );

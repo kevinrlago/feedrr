@@ -1,8 +1,8 @@
-# tests/services/test_feed_service.py
+# tests/test_services/test_feed_service.py
 import pytest
 from unittest.mock import patch
 from app.services.feed_service import FeedService
-from ..models import create_test_feed, create_test_category
+from tests.test_models import create_test_feed, create_test_category  # Fixed import path
 
 def test_create_feed(test_db):
     service = FeedService(test_db)
