@@ -1,13 +1,14 @@
 // frontend/src/components/Settings/LoginMethodsConfig.js
 import React, { useState, useEffect } from 'react';
 import { Box, Card, Switch, FormControlLabel } from '@mui/material';
-import { useAuth } from '../../hooks/useAuth';
+import { useAuth } from '../../../../hooks/useAuth';
 import axios from 'axios';
+import Alert from '@mui/material/Alert';
 
 const LoginMethodsConfig = () => {
   const { user } = useAuth();
   const [config, setConfig] = useState(null);
-  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
 
   useEffect(() => {
     loadConfig();
@@ -20,8 +21,7 @@ const LoginMethodsConfig = () => {
       setConfig(response.data);
     } catch (error) {
       console.error('Failed to load config:', error);
-    } finally {
-      setLoading(false);
+      setError(error);
     }
   };
 
@@ -34,12 +34,14 @@ const LoginMethodsConfig = () => {
       setConfig(newConfig);
     } catch (error) {
       console.error('Failed to update:', error);
+      setError(error);
     }
   };
 
   return (
     <Card>
       <Box p={2}>
+        {error && <Alert severity="error">{error}</Alert>}
         <FormControlLabel
           control={
             <Switch

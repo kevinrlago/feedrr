@@ -23,8 +23,8 @@ const MagicLinkLogin = () => {
     setError('');
 
     try {
-      const response = await axios.post('/api/v1/auth/magic-link', { email });
-      setMessage('Magic link sent! Check your email.');
+      await axios.post('/api/v1/auth/magic-link', { email });
+      setMessage('Magic link sent!');
     } catch (err) {
       setError('Failed to send magic link. Please try again.');
     } finally {

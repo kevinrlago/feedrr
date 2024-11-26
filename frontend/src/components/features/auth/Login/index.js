@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import axios from 'axios';
 import { Container, Typography, TextField, Button, Paper, Box } from '@mui/material';
 import { styled } from '@mui/system';
+import PropTypes from 'prop-types';
 
 const StyledPaper = styled(Paper)(({ theme }) => ({
   padding: theme.spacing(3),
@@ -57,5 +58,9 @@ function Login({ setToken }) {
     </Container>
   );
 }
+
+Login.propTypes = {
+  setToken: PropTypes.func.isRequired
+};
 
 export default Login;
