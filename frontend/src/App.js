@@ -106,7 +106,7 @@ const App = () => {
   const [openFeeds, setOpenFeeds] = useState(false);
   const [openConfig, setOpenConfig] = useState(false);
   const [openSenders, setOpenSenders] = useState(false);
-  const { loginEnabled } = useAuth();
+  const { loginEnabled, isAuthenticated } = useAuth();
 
   const handleNavigate = (path) => {
     navigate(path);
@@ -212,164 +212,35 @@ const App = () => {
       <AppBar position="fixed">
         <Toolbar>
           <Logo variant="full" />
-          {/* Rest of toolbar content */}
         </Toolbar>
       </AppBar>
-      <SidebarWrapper>
-        <Sidebar>
-          <List>
-            {menuItems.map(item => renderMenuItem(item))}
-          </List>
-        </Sidebar>
-      </SidebarWrapper>
+
+        <SidebarWrapper>
+          <Sidebar>
+            <List>
+              {menuItems.map(item => renderMenuItem(item))}
+            </List>
+          </Sidebar>
+        </SidebarWrapper>
+
       <Main>
         <Routes>
-          {loginEnabled ? (
-            <>
-              <Route path="/login" element={<Login />} />
-              <Route path="/" element={
-                <PrivateRoute>
-                  <Dashboard />
-                </PrivateRoute>
-              } />
-              <Route path="/feeds" element={
-                <PrivateRoute>
-                  <FeedList />
-                </PrivateRoute>
-              } />
-              <Route path="/feeds/add" element={
-                <PrivateRoute>
-                  <AddFeed />
-                </PrivateRoute>
-              } />
-              <Route path="/feeds/requests" element={
-                <PrivateRoute>
-                  <FeedRequests />
-                </PrivateRoute>
-              } />
-              <Route path="/categories" element={
-                <PrivateRoute>
-                  <CategoryConfig />
-                </PrivateRoute>
-              } />
-              <Route path="/users" element={
-                <PrivateRoute>
-                  <UserList />
-                </PrivateRoute>
-              } />
-              <Route path="/users/add" element={
-                <PrivateRoute>
-                  <AddUser />
-                </PrivateRoute>
-              } />
-              <Route path="/telegram" element={
-                <PrivateRoute>
-                  <TelegramConfig />
-                </PrivateRoute>
-              } />
-              <Route path="/alerts" element={
-                <PrivateRoute>
-                  <Alerts />
-                </PrivateRoute>
-              } />
-              <Route path="/stats" element={
-                <PrivateRoute>
-                  <Stats />
-                </PrivateRoute>
-              } />
-              <Route path="/senders/telegram" element={
-                <PrivateRoute>
-                  <TelegramConfig />
-                </PrivateRoute>
-              } />
-              <Route path="/senders/discord" element={
-                <PrivateRoute>
-                  <DiscordConfig />
-                </PrivateRoute>
-              } />
-              <Route path="/senders/whatsapp" element={
-                <PrivateRoute>
-                  <WhatsAppConfig />
-                </PrivateRoute>
-              } />
-              <Route path="/notifications" element={
-                <PrivateRoute>
-                  <NotificationList />
-                </PrivateRoute>
-              } />
-              <Route path="/auth/magic-link" element={
-                <PrivateRoute>
-                  <MagicLinkLogin />
-                </PrivateRoute>
-              } />
-              <Route path="/settings" element={
-                <PrivateRoute>
-                  <Settings />
-                </PrivateRoute>
-              }>
-                <Route path="profile" element={
-                  <PrivateRoute>
-                    <UserProfile />
-                  </PrivateRoute>
-                } />
-                <Route path="login-methods" element={
-                  <PrivateRoute>
-                    <LoginMethodsConfig />
-                  </PrivateRoute>
-                } />
-              </Route>
-              <Route path="/settings/login-methods" element={
-                <PrivateRoute>
-                  <LoginMethodsConfig />
-                </PrivateRoute>
-              } />
-              <Route path="/configuration/login" element={
-                <PrivateRoute>
-                  <LoginConfig />
-                </PrivateRoute>
-              } />
-              <Route 
-                path="/configuration/users/list" 
-                element={
-                  <PrivateRoute>
-                    <UserList />
-                  </PrivateRoute>
-                } 
-              />
-              <Route 
-                path="/configuration/users/add" 
-                element={
-                  <PrivateRoute>
-                    <AddUser />
-                  </PrivateRoute>
-                } 
-              />
-            </>
-          ) : (
-            <>
-              <Route path="/" element={<Dashboard />} />
-              <Route path="/feeds" element={<FeedList />} />
-              <Route path="/feeds/add" element={<AddFeed />} />
-              <Route path="/feeds/requests" element={<FeedRequests />} />
-              <Route path="/categories" element={<CategoryConfig />} />
-              <Route path="/users" element={<UserList />} />
-              <Route path="/users/add" element={<AddUser />} />
-              <Route path="/telegram" element={<TelegramConfig />} />
-              <Route path="/alerts" element={<Alerts />} />
-              <Route path="/stats" element={<Stats />} />
-              <Route path="/senders/telegram" element={<TelegramConfig />} />
-              <Route path="/senders/discord" element={<DiscordConfig />} />
-              <Route path="/senders/whatsapp" element={<WhatsAppConfig />} />
-              <Route path="/notifications" element={<NotificationList />} />
-              <Route path="/auth/magic-link" element={<MagicLinkLogin />} />
-              <Route path="/settings" element={<Settings />}>
-                <Route path="profile" element={<UserProfile />} />
-                <Route path="login-methods" element={<LoginMethodsConfig />} />
-              </Route>
-              <Route path="/settings/login-methods" element={<LoginMethodsConfig />} />
-              <Route path="/configuration/login" element={<LoginConfig />} />
-            </>
-          )}
+          <Route path="/login" element={<Login />} />
+          {/* Ruta especial para primer usuario - sin autenticación */}
+          <Route 
+            path="/first-user" 
+            element={<AddUser isFirstUserSetup={true} />} 
+          />
+          {/* Rutas protegidas */}
+          <Route 
+            path="/configuration/users/add" 
+            element={
+              <PrivateRoute>
+                <AddUser />
+              </PrivateRoute>
+            } 
+          />
+          {/* ... otras rutas ... */}
         </Routes>
       </Main>
     </AppWrapper>

@@ -1,29 +1,47 @@
 // src/components/routes/PrivateRoute.js
-import React, { useEffect } from 'react';
+import React, { useState, useEffect } from 'react';
 import PropTypes from 'prop-types';
 import { Navigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../../hooks/useAuth';
+import { CircularProgress, Box } from '@mui/material';
+import { userService } from '../../services/user.service';
 
 const PrivateRoute = ({ children }) => {
-  const { isAuthenticated, loginEnabled, checkAuth } = useAuth();
+  const { isAuthenticated, loading } = useAuth();
+  const [isFirstUser, setIsFirstUser] = useState(false);
+  const [checkingFirstUser, setCheckingFirstUser] = useState(true);
   const location = useLocation();
 
   useEffect(() => {
-    checkAuth();
-  }, [checkAuth]);
+    const checkFirstUser = async () => {
+      try {
+        const { exists } = await userService.checkUsersExist();
+        setIsFirstUser(!exists);
+      } catch (error) {
+        console.error('Error checking users:', error);
+      } finally {
+        setCheckingFirstUser(false);
+      }
+    };
+    checkFirstUser();
+  }, []);
 
-  // Redirect to login if not authenticated and login is enabled
-  if (loginEnabled && !isAuthenticated && location.pathname !== '/login') {
-    return <Navigate 
-      to="/login" 
-      state={{ from: location.pathname }}
-      replace 
-    />;
+  if (loading || checkingFirstUser) {
+    return (
+      <Box display="flex" justifyContent="center" alignItems="center" minHeight="100vh">
+        <CircularProgress />
+      </Box>
+    );
   }
 
-  // Redirect to dashboard if authenticated and trying to access login
-  if (isAuthenticated && location.pathname === '/login') {
-    return <Navigate to="/" replace />;
+  // Si es la ruta de creación del primer usuario y no hay usuarios, permitir acceso
+  if (location.pathname === '/configuration/users/add' && isFirstUser) {
+    return children;
+  }
+
+  // En cualquier otro caso, verificar autenticación
+  if (!isAuthenticated) {
+    return <Navigate to="/login" state={{ from: location.pathname }} replace />;
   }
 
   return children;

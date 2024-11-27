@@ -44,6 +44,37 @@ async def create_user(
     db.refresh(db_user)
     return db_user
 
+@router.get("/exists")
+async def check_users_exist(db: Session = Depends(get_db)):
+    """Check if any users exist in the system"""
+    count = db.query(User).count()
+    return {"exists": count > 0}
+
+@router.post("/first", response_model=UserRead)
+async def create_first_user(
+    user: UserCreate,
+    db: Session = Depends(get_db)
+):
+    # Verificar si ya existen usuarios
+    user_count = db.query(User).count()
+    if user_count > 0:
+        raise HTTPException(
+            status_code=403,
+            detail="System already has users. Please login as admin."
+        )
+    
+    # Crear primer usuario como admin
+    hashed_password = get_password_hash(user.password)
+    db_user = User(
+        **user.dict(exclude={'password'}),
+        hashed_password=hashed_password,
+        role=UserRole.ADMIN  # Forzar rol de admin
+    )
+    db.add(db_user)
+    db.commit()
+    db.refresh(db_user)
+    return db_user
+
 @router.get("/", response_model=List[UserRead])
 async def get_users(
     skip: int = 0,

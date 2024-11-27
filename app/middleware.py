@@ -1,11 +1,22 @@
 # app/middleware.py
 from fastapi import Request, HTTPException
-from fastapi.responses import JSONResponse
+from fastapi.responses import JSONResponse, RedirectResponse
 from typing import Callable
 import time
 from app.core.rate_limit import RateLimiter
 
 rate_limiter = RateLimiter(max_requests=100, window_seconds=60)
+
+# List of public endpoints that don't require authentication
+PUBLIC_ENDPOINTS = [
+    "/api/v1/users/exists",
+    "/api/v1/users/first",
+    "/token",
+    "/login",
+    "/docs",
+    "/redoc",
+    "/openapi.json"
+]
 
 async def error_handler_middleware(request: Request, call_next):
     try:
@@ -22,13 +33,17 @@ async def error_handler_middleware(request: Request, call_next):
         )
 
 async def auth_middleware(request: Request, call_next):
-    if request.url.path in ["/auth/token", "/docs", "/redoc"]:
+    # Skip auth check for public endpoints and OPTIONS requests
+    if (
+        request.method == "OPTIONS" or
+        any(request.url.path.startswith(endpoint) for endpoint in PUBLIC_ENDPOINTS)
+    ):
         return await call_next(request)
 
+    # Check for auth token
     auth = request.headers.get("Authorization")
-    api_key = request.headers.get("X-API-Key")
-
-    if not auth and not api_key:
+    if not auth:
+        # Return 401 instead of redirecting
         return JSONResponse(
             status_code=401,
             content={"detail": "Not authenticated"}
@@ -45,4 +60,5 @@ async def rate_limit_middleware(request: Request, call_next):
             content={"detail": "Too many requests"}
         )
     
-    return await call_next(request)
+    response = await call_next(request)
+    return response

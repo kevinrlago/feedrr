@@ -1,8 +1,19 @@
 {
-    "users": [
-      {
-        "email": "test@example.com",
-        "password": "password123"
-      }
-    ]
+  "users": {
+    "admin": {
+      "email": "admin@example.com",
+      "password": "adminpass123",
+      "role": "ADMIN"
+    },
+    "pro": {
+      "email": "pro@example.com", 
+      "password": "propass123",
+      "role": "PRO_USER"
+    },
+    "basic": {
+      "email": "basic@example.com",
+      "password": "basicpass123",
+      "role": "BASIC_USER"
+    }
   }
+}
