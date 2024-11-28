@@ -13,7 +13,7 @@ export const api = axios.create({
 const publicEndpoints = [
   '/api/v1/users/exists',
   '/api/v1/users/first',
-  '/token'
+  '/api/v1/auth/token'
 ];
 
 api.interceptors.request.use((config) => {
@@ -26,7 +26,7 @@ api.interceptors.request.use((config) => {
   }
   
   // Transform request data to form-urlencoded for login
-  if (config.url === '/token') {
+  if (config.url.includes('/api/v1/auth/token')) {
     config.headers['Content-Type'] = 'application/x-www-form-urlencoded';
     config.data = qs.stringify(config.data);
   }

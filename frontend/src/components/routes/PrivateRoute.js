@@ -7,7 +7,7 @@ import { CircularProgress, Box } from '@mui/material';
 import { userService } from '../../services/user.service';
 
 const PrivateRoute = ({ children }) => {
-  const { isAuthenticated, loading } = useAuth();
+  const { isAuthenticated, loading, loginRequired } = useAuth();
   const [isFirstUser, setIsFirstUser] = useState(false);
   const [checkingFirstUser, setCheckingFirstUser] = useState(true);
   const location = useLocation();
@@ -34,12 +34,17 @@ const PrivateRoute = ({ children }) => {
     );
   }
 
+  // Si el login no está habilitado, permitir acceso
+  if (!loginRequired) {
+    return children;
+  }
+
   // Si es la ruta de creación del primer usuario y no hay usuarios, permitir acceso
   if (location.pathname === '/configuration/users/add' && isFirstUser) {
     return children;
   }
 
-  // En cualquier otro caso, verificar autenticación
+  // Si el login está habilitado pero no está autenticado, redirigir
   if (!isAuthenticated) {
     return <Navigate to="/login" state={{ from: location.pathname }} replace />;
   }

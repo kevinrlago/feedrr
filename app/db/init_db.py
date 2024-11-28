@@ -4,6 +4,9 @@ from psycopg2.extensions import ISOLATION_LEVEL_AUTOCOMMIT
 from urllib.parse import urlparse
 from sqlalchemy.orm import Session
 from app.core.config import CONFIG
+from app.models.user import User  # Añadir esta importación
+from app.core.constants import UserRole, Language  # Add Language import
+from app.core.security import get_password_hash
 
 def create_database_if_not_exists():
     """Create database if it doesn't exist"""
@@ -42,7 +45,7 @@ def create_database_if_not_exists():
             conn.close()
 
 def init_db(db: Session) -> None:
-    """Initialize the database."""
+    """Initialize database with required initial data."""
     try:
         # Create database if it doesn't exist
         create_database_if_not_exists()
@@ -50,8 +53,24 @@ def init_db(db: Session) -> None:
         # Create all tables
         from app.db.base import Base
         from app.db.session import engine
+        Base.metadata.drop_all(bind=engine)  # Drop existing tables
         Base.metadata.create_all(bind=engine)
         print("Database tables created successfully")
+        
+        # Create default admin user if no users exist
+        admin = db.query(User).first()
+        if not admin:
+            admin = User(
+                username="admin",
+                email="admin@system.local",
+                hashed_password=None,  # Admin starts with no password
+                role=UserRole.ADMIN,
+                is_active=True,
+                preferred_language=Language.ENGLISH
+            )
+            db.add(admin)
+            db.commit()
+            print("Default admin user created successfully")
     except Exception as e:
         print(f"Error initializing database: {e}")
         raise

@@ -1,16 +1,34 @@
 // frontend/src/hooks/useAuth.js
 import { useState, useEffect, useCallback } from 'react';
-import axios from 'axios';
+import { api } from '../services/api';
 
 export const useAuth = () => {
   const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [isAuthenticated, setIsAuthenticated] = useState(false);
-  const [loginEnabled, setLoginEnabled] = useState(true);
+  const [loginRequired, setLoginRequired] = useState(false);
 
   const checkAuth = useCallback(async () => {
     try {
+      // Verificar si el login está habilitado
+      const { data: config } = await api.get('/api/v1/config/login');
+      const loginEnabled = config?.loginEnabled || false;
+      setLoginRequired(loginEnabled);
+
+      if (!loginEnabled) {
+        // Si el login no está habilitado, usar el admin por defecto
+        setUser({
+          username: 'admin',
+          email: 'admin@system.local',
+          role: 'ADMIN'
+        });
+        setIsAuthenticated(true);
+        setLoading(false);
+        return;
+      }
+
+      // Si el login está habilitado, verificar autenticación normal
       const token = localStorage.getItem('token');
       if (!token) {
         setIsAuthenticated(false);
@@ -18,17 +36,13 @@ export const useAuth = () => {
         return;
       }
 
-      const response = await axios.get('/api/v1/auth/validate', {
-        headers: { Authorization: `Bearer ${token}` }
-      });
-      
+      const response = await api.get('/api/v1/users/me');
       setUser(response.data);
       setIsAuthenticated(true);
     } catch (err) {
-      localStorage.removeItem('token');
+      console.error('Auth check error:', err);
       setUser(null);
       setIsAuthenticated(false);
-      setError(err.message);
     } finally {
       setLoading(false);
     }
@@ -38,50 +52,19 @@ export const useAuth = () => {
     checkAuth();
   }, [checkAuth]);
 
-  const login = async (email, password) => {
+  const login = async (username, password) => {
     try {
-      // Change from '/api/v1/auth/login' to '/token' to match backend
-      const response = await axios.post('/token', {
-        username: email,  // Note: backend expects 'username' not 'email'
-        password: password
-      }, {
-        headers: {
-          'Content-Type': 'application/x-www-form-urlencoded'
-        }
+      const response = await api.post('/token', {
+        username,
+        password
       });
-      
+
       const { access_token } = response.data;
       localStorage.setItem('token', access_token);
-      setIsAuthenticated(true);
-      await checkAuth(); // This will set the user data
+      await checkAuth();
       return true;
     } catch (err) {
-      setError(err.response?.data?.detail || 'Login failed');
-      throw err;
-    }
-  };
-
-  const magicLinkLogin = async (email) => {
-    try {
-      await axios.post('/api/v1/auth/magic-link', { email });
-      return true;
-    } catch (err) {
-      setError(err.message);
-      throw err;
-    }
-  };
-
-  const verifyMagicLink = async (token) => {
-    try {
-      const response = await axios.post('/api/v1/auth/verify', { token });
-      const { access_token, user } = response.data;
-      localStorage.setItem('token', access_token);
-      setUser(user);
-      setIsAuthenticated(true);
-      return user;
-    } catch (err) {
-      setError(err.message);
-      throw err;
+      throw new Error(err.response?.data?.detail || 'Login failed');
     }
   };
 
@@ -97,10 +80,8 @@ export const useAuth = () => {
     error,
     login,
     logout,
-    magicLinkLogin,
-    verifyMagicLink,
     isAuthenticated,
-    loginEnabled,
+    loginRequired,
     checkAuth
   };
 };

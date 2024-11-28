@@ -8,9 +8,9 @@ class User(Base):
     __tablename__ = "users"
 
     id = Column(Integer, primary_key=True, index=True)
-    username = Column(String, unique=True, index=True, nullable=False)
-    email = Column(String, unique=True, index=True, nullable=False)
-    hashed_password = Column(String, nullable=False)
+    username = Column(String, unique=True, index=True)
+    email = Column(String, unique=True, index=True)
+    hashed_password = Column(String, nullable=True)  # Changed to nullable=True
     role = Column(Enum(UserRole), default=UserRole.BASIC_USER)
     is_active = Column(Boolean, default=True)
     

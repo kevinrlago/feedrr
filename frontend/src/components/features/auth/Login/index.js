@@ -51,7 +51,7 @@ function Login() {
       <form onSubmit={handleSubmit}>
         <TextField
           fullWidth
-          label="Email"
+          label="Email/Username"
           value={email}
           onChange={(e) => setEmail(e.target.value)}
           margin="normal"
