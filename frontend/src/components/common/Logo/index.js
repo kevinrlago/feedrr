@@ -1,4 +1,4 @@
-// src/components/Logo.js
+// src/components/common/Logo/index.js
 import React from 'react';
 import { Box, Typography } from '@mui/material';
 import { RssFeed } from '@mui/icons-material';
@@ -28,8 +28,10 @@ const Logo = ({ color = orange[500], variant = 'full' }) => (
     )}
   </Box>
 );
+
 Logo.propTypes = {
   color: PropTypes.string,
   variant: PropTypes.oneOf(['full', 'icon'])
 };
+
 export default Logo;

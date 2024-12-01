@@ -55,25 +55,52 @@ async def create_first_user(
     user: UserCreate,
     db: Session = Depends(get_db)
 ):
-    # Verificar si ya existen usuarios
-    user_count = db.query(User).count()
-    if user_count > 0:
-        raise HTTPException(
-            status_code=403,
-            detail="System already has users. Please login as admin."
+    """Create first admin user if no users exist"""
+    try:
+        # Check if users exist
+        user_count = db.query(User).count()
+        if user_count > 0:
+            raise HTTPException(
+                status_code=403,
+                detail="System already has users"
+            )
+        
+        # Check if username already exists
+        existing_user = db.query(User).filter(
+            (User.username == user.username) | 
+            (User.email == user.email)
+        ).first()
+        
+        if existing_user:
+            raise HTTPException(
+                status_code=400,
+                detail="Username or email already exists"
+            )
+        
+        # Create first user as admin
+        hashed_password = get_password_hash(user.password)
+        db_user = User(
+            username=user.username,
+            email=user.email,
+            hashed_password=hashed_password,
+            role=UserRole.ADMIN
         )
-    
-    # Crear primer usuario como admin
-    hashed_password = get_password_hash(user.password)
-    db_user = User(
-        **user.dict(exclude={'password'}),
-        hashed_password=hashed_password,
-        role=UserRole.ADMIN  # Forzar rol de admin
-    )
-    db.add(db_user)
-    db.commit()
-    db.refresh(db_user)
-    return db_user
+        db.add(db_user)
+        db.commit()
+        db.refresh(db_user)
+        return db_user
+        
+    except Exception as e:
+        db.rollback()
+        if "duplicate key" in str(e):
+            raise HTTPException(
+                status_code=400,
+                detail="Username or email already exists"
+            )
+        raise HTTPException(
+            status_code=500,
+            detail=f"Error creating user: {str(e)}"
+        )
 
 @router.get("/", response_model=List[UserRead])
 async def get_users(

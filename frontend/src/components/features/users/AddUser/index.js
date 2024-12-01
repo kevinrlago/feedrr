@@ -2,7 +2,7 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { userService } from '../../../../services/user.service';
-import axios from 'axios';
+
 import {
   Box,
   TextField,
@@ -33,10 +33,12 @@ const AddUser = () => {
       try {
         const { exists } = await userService.checkUsersExist();
         setIsFirstUser(!exists);
+        if (!exists) {
+          setFormData(prev => ({ ...prev, role: 'ADMIN' }));
+        }
       } catch (err) {
         console.error('Error checking users:', err);
-        // Si hay error, asumimos que es el primer usuario
-        setIsFirstUser(true);
+        setError(err.message);
       }
     };
     checkFirstUser();
@@ -49,17 +51,17 @@ const AddUser = () => {
 
     try {
       if (isFirstUser) {
-        await userService.createFirstUser({
-          ...formData,
-          role: 'ADMIN'
-        });
+        console.log('Creating first admin user:', formData);
+        await userService.createFirstUser(formData);
         navigate('/login');
       } else {
+        console.log('Creating regular user:', formData);
         await userService.create(formData);
         navigate('/configuration/users/list');
       }
     } catch (err) {
-      setError(err.message);
+      console.error('Error in handleSubmit:', err);
+      setError(err.message || 'Failed to create user');
     } finally {
       setLoading(false);
     }
@@ -71,9 +73,9 @@ const AddUser = () => {
         {isFirstUser ? 'Create First Admin User' : 'Add New User'}
       </Typography>
       
-      {isFirstUser && (
-        <Alert severity="info" sx={{ mb: 2 }}>
-          This will be the first user in the system and will be created as an administrator.
+      {error && (
+        <Alert severity="error" sx={{ mb: 2 }}>
+          {error}
         </Alert>
       )}
 
@@ -136,12 +138,6 @@ const AddUser = () => {
           {loading ? <CircularProgress size={24} /> : 'Create User'}
         </Button>
       </form>
-
-      {error && (
-        <Alert severity="error" sx={{ mt: 2 }}>
-          {error}
-        </Alert>
-      )}
     </Box>
   );
 };

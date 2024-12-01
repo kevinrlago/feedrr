@@ -6,7 +6,8 @@ from datetime import timedelta
 # FastAPI imports
 from fastapi import FastAPI, Depends, HTTPException, status, Request
 from fastapi.security import OAuth2PasswordBearer, OAuth2PasswordRequestForm
-from fastapi.responses import RedirectResponse
+from fastapi.responses import RedirectResponse, JSONResponse
+from fastapi.middleware.cors import CORSMiddleware
 
 # Database imports
 from sqlalchemy.orm import Session
@@ -18,7 +19,7 @@ from app.models.user import User
 from app.models.feed import Feed
 from app.models.category import Category
 from app.models.feed_request import FeedRequest
-
+from app.models.login_config import LoginConfig
 # Schemas imports
 from app.schemas.feed import FeedEntry, FeedEntryCreate
 from app.schemas.category import CategoryCreate, CategoryRead  # Add this import
@@ -32,7 +33,8 @@ from app.services.telegram_sender import TelegramSender
 
 # Auth imports
 from app.api.v1.auth import create_access_token, get_current_user, authenticate_user
-
+from app.core.security import get_password_hash
+from app.core.constants import UserRole
 # CRUD imports
 from app.db.crud import FeedCRUD, CategoryCRUD, PublicationHistoryCRUD  # Updated import path
 
@@ -47,19 +49,43 @@ import uvicorn
 from app.middleware import error_handler_middleware, auth_middleware, rate_limit_middleware
 
 app = FastAPI(title="Feedrr API")
-app.include_router(api_router)
 
+# Configure CORS first
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],  # En producción, especifica los orígenes permitidos
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
+
+app.include_router(api_router, prefix="/api/v1")
+
+# Add custom middlewares
 app.middleware("http")(error_handler_middleware)
 app.middleware("http")(auth_middleware)
 app.middleware("http")(rate_limit_middleware)
 
+# Definir rutas públicas
+PUBLIC_PATHS = [
+    "/api/v1/auth/token",
+    "/api/v1/users/exists",
+    "/api/v1/users/first",
+    "/api/v1/config/login",
+    "/api/v1/config/initial-setup"  # Add this endpoint
+]
+
 @app.middleware("http")
 async def auth_middleware(request: Request, call_next):
-    if request.url.path not in ["/login", "/token"]:
-        try:
-            current_user: User = await get_current_user(request)
-        except Exception:
-            return RedirectResponse(url="/login")
+    if request.url.path in PUBLIC_PATHS:
+        return await call_next(request)
+    try:
+        current_user: User = await get_current_user(request)
+    except Exception:
+        return JSONResponse(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            content={"detail": "Not authenticated"}
+        )
     response = await call_next(request)
     return response
 
@@ -74,10 +100,6 @@ def get_db():
 @app.get("/")
 async def root():
     return {"status": "ok", "message": "RSS Haiku API"}
-
-@app.get("/login")
-async def login():
-    return {"message": "Please log in"}
 
 # Feeds
 @app.get("/feeds", response_model=List[FeedEntry])
@@ -186,6 +208,97 @@ async def login(form_data: OAuth2PasswordRequestForm = Depends(), db: Session = 
         data={"sub": user.email}, expires_delta=access_token_expires
     )
     return {"access_token": access_token, "token_type": "bearer"}
+
+@app.post("/api/v1/auth/token")
+async def login_for_access_token(
+    form_data: OAuth2PasswordRequestForm = Depends(),
+    db: Session = Depends(get_db)
+):
+    """Endpoint para login y obtención de token"""
+    try:
+        user = authenticate_user(db, form_data.username, form_data.password)
+        if not user:
+            raise HTTPException(
+                status_code=status.HTTP_401_UNAUTHORIZED,
+                detail="Incorrect username or password",
+                headers={"WWW-Authenticate": "Bearer"},
+            )
+            
+        access_token_expires = timedelta(minutes=ACCESS_TOKEN_EXPIRE_MINUTES)
+        access_token = create_access_token(
+            data={"sub": user.email},
+            expires_delta=access_token_expires
+        )
+        return {"access_token": access_token, "token_type": "bearer"}
+        
+    except Exception as e:
+        logger.error(f"Login error: {str(e)}")
+        raise HTTPException(
+            status_code=500,
+            detail="Internal server error during login"
+        )
+
+@app.get("/api/v1/config/login")
+async def get_login_config(db: Session = Depends(get_db)):
+    """Public endpoint for login configuration"""
+    config = db.query(LoginConfig).first()
+    return {
+        "exists": config is not None,
+        "loginEnabled": config.password_enabled if config else False,
+        "methods": {
+            "password": config.password_enabled if config else False,
+            "magicLink": config.magic_link_enabled if config else False,
+            "oauth": config.oauth_enabled if config else False
+        }
+    }
+
+@app.post("/api/v1/config/initial-setup")
+async def initial_setup(
+    request: Request,
+    db: Session = Depends(get_db)
+):
+    """Initial setup endpoint"""
+    try:
+        data = await request.json()
+        login_enabled = data.get('loginEnabled', False)
+        create_admin = data.get('createAdmin', False)
+        admin_user = data.get('adminUser')
+
+        # Create LoginConfig if it doesn't exist
+        login_config = db.query(LoginConfig).first()
+        if not login_config:
+            login_config = LoginConfig()
+            
+        login_config.password_enabled = login_enabled
+        login_config.is_public = not login_enabled
+        db.add(login_config)
+
+        # Create admin user if requested
+        if create_admin and admin_user:
+            if not all(k in admin_user for k in ['username', 'email', 'password']):
+                raise HTTPException(
+                    status_code=400,
+                    detail="Missing required admin user fields"
+                )
+                
+            hashed_password = get_password_hash(admin_user['password'])
+            user = User(
+                username=admin_user['username'],
+                email=admin_user['email'],
+                hashed_password=hashed_password,
+                role=UserRole.ADMIN
+            )
+            db.add(user)
+
+        db.commit()
+        return {"message": "Initial setup completed successfully"}
+        
+    except Exception as e:
+        db.rollback()
+        raise HTTPException(
+            status_code=500,
+            detail=f"Setup failed: {str(e)}"
+        )
 
 @app.get("/users/me")
 async def read_users_me(current_user: Optional[User] = Depends(get_current_user)):

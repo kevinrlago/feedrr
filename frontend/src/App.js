@@ -1,9 +1,9 @@
 // src/App.js
-import React, { useState } from 'react';
-import { Routes, Route, useNavigate, Link } from 'react-router-dom';
-import PrivateRoute from './components/routes/PrivateRoute';
-import Login from './components/features/auth/Login';
+import React, { useState, useEffect } from 'react';
+import { Routes, Route, useNavigate, Link, Navigate } from 'react-router-dom';
 import { useAuth } from './hooks/useAuth';
+import { userService } from './services/user.service';
+import { api } from './services/api'; // Add this line to import the api module
 import {
   AppBar,
   Toolbar,
@@ -13,7 +13,8 @@ import {
   ListItemIcon,
   ListItemText,
   Collapse,
-  styled
+  styled,
+  CircularProgress
 } from '@mui/material';
 import {
   Dashboard as DashboardIcon,
@@ -57,6 +58,7 @@ import UserProfile from './components/features/users/UserProfile/index';
 import NotificationList from './components/features/notifications/NotificationList/index';
 
 // Features - Auth
+import Login from './components/features/auth/Login/index';
 import MagicLinkLogin from './components/features/auth/MagicLinkLogin/index';
 
 // Features - Settings
@@ -68,6 +70,9 @@ import LoginConfig from './components/features/settings/LoginConfig';
 
 // Layout
 import Sidebar from './components/layout/Sidebar/index';
+
+// Initial Setup
+import InitialSetup from './components/features/setup/InitialSetup';
 
 // Common
 import Logo from './components/common/Logo/index';
@@ -90,23 +95,95 @@ const SidebarWrapper = styled('div')(({ theme }) => ({
 const Main = styled('main')(({ theme }) => ({
   flexGrow: 1,
   padding: theme.spacing(3),
-  paddingTop: `calc(64px + ${theme.spacing(3)})`, // Ajustado el padding superior
-  marginLeft: drawerWidth,
-  minHeight: '100vh',
+  width: '100%',
+  transition: theme.transitions.create(['margin', 'padding'], {
+    easing: theme.transitions.easing.sharp,
+    duration: theme.transitions.duration.leavingScreen,
+  }),
 }));
 
 const AppWrapper = styled('div')({
   display: 'flex',
   minHeight: '100vh',
-  paddingTop: 64, // Añadido padding superior
 });
+
+const menuItems = [
+  { path: '/dashboard', icon: <DashboardIcon />, text: 'Dashboard' },
+  {
+    text: 'Feeds',
+    icon: <RssIcon />,
+    children: [
+      { path: '/feeds', icon: <RssIcon />, text: 'Feed List' },
+      { path: '/feeds/add', icon: <AddIcon />, text: 'Add Feed' }
+    ]
+  },
+  {
+    text: 'Configuration',
+    icon: <SettingsIcon />,
+    children: [
+      {
+        text: 'Senders',
+        icon: <SendIcon />,
+        children: [
+          { path: '/configuration/senders/telegram', text: 'Telegram' },
+          { path: '/configuration/senders/discord', text: 'Discord' },
+          { path: '/configuration/senders/whatsapp', text: 'WhatsApp' }
+        ]
+      },
+      { path: '/configuration/users', icon: <PersonIcon />, text: 'Users' }
+    ]
+  }
+];
+
+const InitialRedirect = () => {
+  const [loading, setLoading] = useState(true);
+  const [hasConfig, setHasConfig] = useState(false);
+  const [hasUsers, setHasUsers] = useState(false);
+  
+  useEffect(() => {
+    const checkInitialSetup = async () => {
+      try {
+        // Primero verificar si existe configuración
+        const { data: loginConfig } = await api.get('/api/v1/config/login');
+        setHasConfig(true);
+
+        // Luego verificar si existen usuarios
+        const { exists } = await userService.checkUsersExist();
+        setHasUsers(exists);
+      } catch (err) {
+        console.error('Error checking initial setup:', err);
+        setHasConfig(false);
+      } finally {
+        setLoading(false);
+      }
+    };
+    checkInitialSetup();
+  }, []);
+
+  if (loading) {
+    return <CircularProgress />;
+  }
+
+  // Si no hay configuración, ir al setup inicial
+  if (!hasConfig) {
+    return <Navigate to="/setup" replace />;
+  }
+
+  // Si hay configuración pero no hay usuarios, ir al setup inicial
+  if (!hasUsers) {
+    return <Navigate to="/setup" replace />;
+  }
+
+  // Si hay configuración y usuarios, ir al login
+  return <Navigate to="/login" replace />;
+};
 
 const App = () => {
   const navigate = useNavigate();
+  const { isAuthenticated } = useAuth();
   const [openFeeds, setOpenFeeds] = useState(false);
   const [openConfig, setOpenConfig] = useState(false);
   const [openSenders, setOpenSenders] = useState(false);
-  const { loginEnabled, isAuthenticated } = useAuth();
 
   const handleNavigate = (path) => {
     navigate(path);
@@ -117,51 +194,6 @@ const App = () => {
     if (item.text === 'Configuration') setOpenConfig(!openConfig);
     if (item.text === 'Senders') setOpenSenders(!openSenders);
   };
-
-  const menuItems = [
-    { text: 'Dashboard', icon: <DashboardIcon />, path: '/' },
-    { text: 'Feeds', icon: <RssIcon />, path: '/feeds', subItems: [
-      { text: 'All Feeds', icon: <RssIcon />, path: '/feeds' },
-      { text: 'Add Feed', icon: <AddIcon />, path: '/feeds/add' },
-      { text: 'Requests', icon: <ListAltIcon />, path: '/feeds/requests' }
-    ]},
-    {
-      text: 'Configuration',
-      icon: <SettingsIcon />,
-      subItems: [
-        {
-          text: 'Users',
-          icon: <PersonIcon />,
-          subItems: [
-            { 
-              text: 'User List', 
-              icon: <ListAltIcon />, 
-              path: '/configuration/users/list'  // Updated path
-            },
-            { 
-              text: 'Add User', 
-              icon: <AddIcon />, 
-              path: '/configuration/users/add' 
-            }
-          ]
-        },
-        {
-          text: 'Senders',
-          icon: <SendIcon />,
-          subItems: [
-            { text: 'Telegram', icon: <TelegramIcon />, path: '/senders/telegram' },
-            { text: 'Discord', icon: <DiscordIcon />, path: '/senders/discord' },
-            { text: 'WhatsApp', icon: <WhatsAppIcon />, path: '/senders/whatsapp' }
-          ]
-        },
-        { text: 'Users', icon: <PersonIcon />, path: '/users' },
-        { text: 'Notifications', icon: <NotificationsIcon />, path: '/notifications' },
-        
-      ]
-    },
-    { text: 'Alerts', icon: <AlertIcon />, path: '/alerts' },
-    { text: 'Statistics', icon: <StatsIcon />, path: '/stats' }
-  ];
 
   const renderMenuItem = (item, depth = 0) => (
     <React.Fragment key={item.text}>
@@ -177,14 +209,14 @@ const App = () => {
       >
         <ListItemIcon>{item.icon}</ListItemIcon>
         <ListItemText primary={item.text} />
-        {item.subItems && (
+        {item.children && (
           item.text === 'Feeds' ? (openFeeds ? <ExpandLess /> : <ExpandMore />) :
           item.text === 'Configuration' ? (openConfig ? <ExpandLess /> : <ExpandMore />) :
           item.text === 'Senders' ? (openSenders ? <ExpandLess /> : <ExpandMore />) :
           null
         )}
       </ListItem>
-      {item.subItems && (
+      {item.children && (
         <Collapse
           in={
             item.text === 'Feeds' ? openFeeds :
@@ -196,51 +228,42 @@ const App = () => {
           unmountOnExit // Changed from unmountOnClose
         >
           <List component="div" disablePadding>
-            {item.subItems.map(subItem => renderMenuItem(subItem, depth + 1))}
+            {item.children.map(subItem => renderMenuItem(subItem, depth + 1))}
           </List>
         </Collapse>
       )}
     </React.Fragment>
   );
 
-  const Settings = () => {
-    return <div>Settings Page</div>;
-  };
-
   return (
     <AppWrapper>
-      <AppBar position="fixed">
-        <Toolbar>
-          <Logo variant="full" />
-        </Toolbar>
-      </AppBar>
+      {isAuthenticated && (
+        <>
+          <AppBar position="fixed">
+            <Toolbar>
+              <Logo variant="full" />
+            </Toolbar>
+          </AppBar>
 
-        <SidebarWrapper>
-          <Sidebar>
-            <List>
-              {menuItems.map(item => renderMenuItem(item))}
-            </List>
-          </Sidebar>
-        </SidebarWrapper>
+          <SidebarWrapper>
+            <Sidebar>
+              <List>
+                {menuItems.map(item => renderMenuItem(item))}
+              </List>
+            </Sidebar>
+          </SidebarWrapper>
+        </>
+      )}
 
-      <Main>
+      <Main sx={{ 
+        pl: isAuthenticated ? `${drawerWidth}px` : 0,
+        pt: isAuthenticated ? '64px' : 0 
+      }}>
         <Routes>
+          <Route path="/setup" element={<InitialSetup />} />
           <Route path="/login" element={<Login />} />
-          {/* Ruta especial para primer usuario - sin autenticación */}
-          <Route 
-            path="/first-user" 
-            element={<AddUser isFirstUserSetup={true} />} 
-          />
-          {/* Rutas protegidas */}
-          <Route 
-            path="/configuration/users/add" 
-            element={
-              <PrivateRoute>
-                <AddUser />
-              </PrivateRoute>
-            } 
-          />
-          {/* ... otras rutas ... */}
+          <Route path="/" element={<InitialRedirect />} />
+          {/* ... rest of routes ... */}
         </Routes>
       </Main>
     </AppWrapper>

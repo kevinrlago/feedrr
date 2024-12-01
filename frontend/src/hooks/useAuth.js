@@ -1,6 +1,7 @@
 // frontend/src/hooks/useAuth.js
 import { useState, useEffect, useCallback } from 'react';
 import { api } from '../services/api';
+import { userService } from '../services/user.service';
 
 export const useAuth = () => {
   const [user, setUser] = useState(null);
@@ -11,38 +12,38 @@ export const useAuth = () => {
 
   const checkAuth = useCallback(async () => {
     try {
-      // Verificar si el login está habilitado
+      // First check if any users exist
+      const { exists } = await userService.checkUsersExist();
+      if (!exists) {
+        setLoginRequired(false);
+        setLoading(false);
+        return;
+      }
+
+      // Get login config
       const { data: config } = await api.get('/api/v1/config/login');
-      const loginEnabled = config?.loginEnabled || false;
-      setLoginRequired(loginEnabled);
+      setLoginRequired(config?.loginEnabled || false);
 
-      if (!loginEnabled) {
-        // Si el login no está habilitado, usar el admin por defecto
-        setUser({
-          username: 'admin',
-          email: 'admin@system.local',
-          role: 'ADMIN'
-        });
+      // Check authentication if required
+      if (config?.loginEnabled) {
+        const token = localStorage.getItem('token');
+        if (!token) {
+          setIsAuthenticated(false);
+          setLoading(false);
+          return;
+        }
+
+        const response = await api.get('/api/v1/users/me');
+        setUser(response.data);
         setIsAuthenticated(true);
-        setLoading(false);
-        return;
       }
-
-      // Si el login está habilitado, verificar autenticación normal
-      const token = localStorage.getItem('token');
-      if (!token) {
-        setIsAuthenticated(false);
-        setLoading(false);
-        return;
-      }
-
-      const response = await api.get('/api/v1/users/me');
-      setUser(response.data);
-      setIsAuthenticated(true);
     } catch (err) {
-      console.error('Auth check error:', err);
-      setUser(null);
-      setIsAuthenticated(false);
+      if (err.response?.status === 401 || err.response?.status === 403) {
+        setIsAuthenticated(false);
+      } else {
+        console.error('Auth check error:', err);
+        setError(err);
+      }
     } finally {
       setLoading(false);
     }
@@ -54,16 +55,27 @@ export const useAuth = () => {
 
   const login = async (username, password) => {
     try {
-      const response = await api.post('/token', {
+      console.log('Attempting login with:', { username, password });
+      const response = await api.post('/api/v1/auth/token', {
         username,
-        password
+        password,
+        grant_type: 'password'
       });
 
+      console.log('Login response:', response.data);
       const { access_token } = response.data;
-      localStorage.setItem('token', access_token);
-      await checkAuth();
-      return true;
+      if (access_token) {
+        localStorage.setItem('token', access_token);
+        await checkAuth();
+        return true;
+      } else {
+        throw new Error('Invalid response format');
+      }
     } catch (err) {
+      console.error('Login error:', err);
+      if (err.response?.status === 401) {
+        throw new Error('Invalid credentials');
+      }
       throw new Error(err.response?.data?.detail || 'Login failed');
     }
   };

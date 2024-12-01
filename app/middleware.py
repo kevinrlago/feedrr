@@ -1,24 +1,22 @@
 # app/middleware.py
-from fastapi import Request, HTTPException
-from fastapi.responses import JSONResponse, RedirectResponse
+from fastapi import Request, HTTPException, status
+from fastapi.responses import JSONResponse
 from typing import Callable
-import time
 from app.core.rate_limit import RateLimiter
+from app.api.deps import get_current_user
 
 rate_limiter = RateLimiter(max_requests=100, window_seconds=60)
 
 # List of public endpoints that don't require authentication
 PUBLIC_ENDPOINTS = [
+    "/api/v1/auth/token",
     "/api/v1/users/exists",
     "/api/v1/users/first",
-    "/token",
-    "/login",
-    "/docs",
-    "/redoc",
-    "/openapi.json"
+    "/api/v1/config/login",
+    "/api/v1/config/initial-setup"
 ]
 
-async def error_handler_middleware(request: Request, call_next):
+async def error_handler_middleware(request: Request, call_next: Callable):
     try:
         return await call_next(request)
     except HTTPException as e:
@@ -32,26 +30,23 @@ async def error_handler_middleware(request: Request, call_next):
             content={"detail": "Internal server error"}
         )
 
-async def auth_middleware(request: Request, call_next):
-    # Skip auth check for public endpoints and OPTIONS requests
-    if (
-        request.method == "OPTIONS" or
-        any(request.url.path.startswith(endpoint) for endpoint in PUBLIC_ENDPOINTS)
-    ):
+async def auth_middleware(request: Request, call_next: Callable):
+    if request.url.path in PUBLIC_ENDPOINTS:
         return await call_next(request)
-
-    # Check for auth token
-    auth = request.headers.get("Authorization")
-    if not auth:
-        # Return 401 instead of redirecting
+        
+    try:
+        current_user = await get_current_user(request)
+        request.state.user = current_user
+    except Exception:
         return JSONResponse(
-            status_code=401,
+            status_code=status.HTTP_401_UNAUTHORIZED,
             content={"detail": "Not authenticated"}
         )
+    
+    response = await call_next(request)
+    return response
 
-    return await call_next(request)
-
-async def rate_limit_middleware(request: Request, call_next):
+async def rate_limit_middleware(request: Request, call_next: Callable):
     client_ip = request.client.host
     
     if not await rate_limiter.check(client_ip):

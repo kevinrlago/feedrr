@@ -2,10 +2,11 @@
 import psycopg2
 from psycopg2.extensions import ISOLATION_LEVEL_AUTOCOMMIT
 from urllib.parse import urlparse
+import os
 from sqlalchemy.orm import Session
 from app.core.config import CONFIG
-from app.models.user import User  # Añadir esta importación
-from app.core.constants import UserRole, Language  # Add Language import
+from app.models.user import User
+from app.core.constants import UserRole, Language
 from app.core.security import get_password_hash
 
 def create_database_if_not_exists():
@@ -50,27 +51,41 @@ def init_db(db: Session) -> None:
         # Create database if it doesn't exist
         create_database_if_not_exists()
         
-        # Create all tables
-        from app.db.base import Base
-        from app.db.session import engine
-        Base.metadata.drop_all(bind=engine)  # Drop existing tables
-        Base.metadata.create_all(bind=engine)
-        print("Database tables created successfully")
+        # Get current environment
+        current_env = os.getenv('APP_ENV', 'production').lower()
         
-        # Create default admin user if no users exist
-        admin = db.query(User).first()
-        if not admin:
-            admin = User(
-                username="admin",
-                email="admin@system.local",
-                hashed_password=None,  # Admin starts with no password
-                role=UserRole.ADMIN,
-                is_active=True,
-                preferred_language=Language.ENGLISH
-            )
-            db.add(admin)
-            db.commit()
-            print("Default admin user created successfully")
+        # Only purge database in test/development environments
+        if current_env in ['test', 'development']:
+            print(f"Purging database in {current_env} environment...")
+            from app.db.base import Base
+            from app.db.session import engine
+            Base.metadata.drop_all(bind=engine)
+            Base.metadata.create_all(bind=engine)
+            print("Database purged successfully")
+
+            # Create default admin user only in dev/test environments
+            if current_env in ['test', 'development']:
+                admin = db.query(User).first()
+                if not admin:
+                    admin = User(
+                        username="admin",
+                        email="admin@system.local",
+                        hashed_password=get_password_hash('admin'),  # Password is 'admin'
+                        role=UserRole.ADMIN,
+                        is_active=True,
+                        preferred_language=Language.ENGLISH
+                    )
+                    db.add(admin)
+                    db.commit()
+                    print("Default admin user created successfully in development/test mode")
+        else:
+            # In production, only create tables if they don't exist
+            from app.db.base import Base
+            from app.db.session import engine
+            Base.metadata.create_all(bind=engine)
+            print("Database tables created/verified successfully in production mode")
+            
     except Exception as e:
         print(f"Error initializing database: {e}")
+        db.rollback()
         raise
